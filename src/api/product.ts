@@ -32,12 +32,8 @@ export interface ProductDetail {
   announcement: AnnouncementItem[];
 }
 
-// ----------------------------------------------------
-// API 함수들
-
 const BASE_URL = "http://localhost:3000";
 
-// 상품 랭킹 조회 API
 export const getRankingProducts = async (
   targetType: TargetType,
   rankType: RankType
