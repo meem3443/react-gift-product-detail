@@ -6,28 +6,33 @@ import { AuthProvider } from "./contexts/AuthProvider";
 import { Header } from "./components/common/Header";
 import GiftOrderPage from "./pages/GiftOrderPage";
 import { ThemeProductsPage } from "./pages/ThemeProductPage";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <div className="w-2xl h-screen bg-gray-100 mx-auto ">
-          <Header />
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-
-            <Route path="/login" element={<LoginPage />} />
-
-            <Route path="/mypage" element={<MyPage />} />
-            <Route path="/order/:productId" element={<GiftOrderPage />} />
-            <Route
-              path="/themes/:themeId/products"
-              element={<ThemeProductsPage />}
-            />
-          </Routes>
-        </div>
-      </AuthProvider>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <AuthProvider>
+          <div className="w-2xl h-screen bg-gray-100 mx-auto ">
+            <Header />
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/mypage" element={<MyPage />} />
+              <Route path="/order/:productId" element={<GiftOrderPage />} />
+              <Route
+                path="/themes/:themeId/products"
+                element={<ThemeProductsPage />}
+              />
+            </Routes>
+          </div>
+        </AuthProvider>
+      </Router>
+      <ReactQueryDevtools initialIsOpen={true} />
+    </QueryClientProvider>
   );
 }
 
