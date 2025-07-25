@@ -4,7 +4,7 @@ import { type Product } from "../../api/product";
 interface RankingProductListProps {
   products: Product[];
   loading: boolean;
-  error: string | null;
+  error: Error | null;
   isNumVisibleOption: boolean;
   onProductClick: (productId: number) => void;
 }
@@ -21,7 +21,7 @@ export const RankingProductList = ({
   }
 
   if (error) {
-    return <p className="text-center text-red-500">에러: {error}</p>;
+    return <p className="text-center text-red-500">에러: {error.message}</p>;
   }
 
   if (products.length === 0) {
