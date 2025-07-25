@@ -83,8 +83,6 @@ export const SortOptionSection = () => {
           onProductClick={handleProductClick}
           isNumVisibleOption={true}
         />
-        {/* ⭐ 로딩 및 에러 상태를 직접 렌더링하고 싶다면 아래와 같이 추가할 수 있습니다.
-             RankingProductList 컴포넌트가 이미 로딩/에러를 처리하는 것으로 보입니다. */}
       </div>
     </div>
   );

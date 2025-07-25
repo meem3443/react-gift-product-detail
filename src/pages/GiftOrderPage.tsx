@@ -32,7 +32,6 @@ const GiftOrderPage = () => {
   const [senderName, setSenderName] = useState<string>("");
   const [messageContent, setMessageContent] = useState<string>("");
 
-  // 🔥 React Query 이용, product info/detail 쿼리
   const enabled = !!productId;
   const parsedProductId = productId ? parseInt(productId, 10) : undefined;
 
@@ -52,7 +51,6 @@ const GiftOrderPage = () => {
     enabled,
     queryFn: () => getProductDetail(parsedProductId!),
     retry: false,
-    // 실제로 product detail을 써먹는 부분 있으면 data 꺼내서 사용!
   });
 
   const totalQuantity = useMemo(() => {
@@ -65,7 +63,6 @@ const GiftOrderPage = () => {
     return totalQuantity * unitPrice;
   }, [totalQuantity, productInfo]);
 
-  // 주문 mutation
   const orderMutation = useMutation({
     mutationFn: async () => {
       const payload = {
@@ -117,7 +114,6 @@ const GiftOrderPage = () => {
     },
   });
 
-  // 주문 로직 (버튼 등에서 호출)
   const handleOrderSubmit = () => {
     if (orderMutation.isPending) return;
 
