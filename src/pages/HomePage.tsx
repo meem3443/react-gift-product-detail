@@ -3,6 +3,8 @@ import FriendSelectSection from "../components/HomeComponent/FriendSelectSection
 import { SortOptionSection } from "../components/HomeComponent/SortOptionSection";
 import { ThemeSection } from "../components/HomeComponent/ThemeSection";
 
+import { ProductDetailBardSection } from "../components/ProductDetailComponent/ProductDetailBarSection";
+
 const HomePage = () => {
   return (
     <div>
@@ -10,6 +12,7 @@ const HomePage = () => {
       <ThemeSection />
       <Entertainment />
       <SortOptionSection />
+      {/* <ProductDetailBardSection /> */}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -10,12 +10,7 @@ import SenderSection from "../components/OrderComponent/SenderSection";
 import ThanksCardSlideSection from "../components/OrderComponent/ThanksCardSlideSection";
 import ProductDetailCard from "../components/OrderComponent/Cards/ProductDetailCard";
 
-import {
-  getProductDetail,
-  getProductInfo,
-  type Product,
-  type ProductDetail as ProductDetailType,
-} from "../api/product";
+import { getProductInfo, type Product } from "../api/product";
 
 import type { ReceiverField } from "../schemas/receiverSchema";
 import { useAuth } from "../contexts/useAuth";
@@ -26,13 +21,12 @@ const GiftOrderPage = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   const { isLoggedIn, authToken, logout } = useAuth();
-  const notify = (message: string) => toast(message);
+  const notify = useCallback((message: string) => toast(message), []);
 
   const [finalReceivers, setFinalReceivers] = useState<ReceiverField[]>([]);
   const [senderName, setSenderName] = useState<string>("");
   const [messageContent, setMessageContent] = useState<string>("");
 
-  // 🔥 React Query 이용, product info/detail 쿼리
   const enabled = !!productId;
   const parsedProductId = productId ? parseInt(productId, 10) : undefined;
 
@@ -47,14 +41,6 @@ const GiftOrderPage = () => {
     retry: false,
   });
 
-  useQuery<ProductDetailType, Error>({
-    queryKey: ["productDetail", parsedProductId],
-    enabled,
-    queryFn: () => getProductDetail(parsedProductId!),
-    retry: false,
-    // 실제로 product detail을 써먹는 부분 있으면 data 꺼내서 사용!
-  });
-
   const totalQuantity = useMemo(() => {
     return finalReceivers.reduce((sum, receiver) => sum + receiver.quantity, 0);
   }, [finalReceivers]);
@@ -65,7 +51,52 @@ const GiftOrderPage = () => {
     return totalQuantity * unitPrice;
   }, [totalQuantity, productInfo]);
 
-  // 주문 mutation
+  const validateAuth = useCallback((): boolean => {
+    if (!isLoggedIn) {
+      notify(UI_MESSAGES.LOGIN_REQUIRED);
+      navigate("/login");
+      return false;
+    }
+    if (!authToken) {
+      notify(UI_MESSAGES.AUTH_TOKEN_MISSING);
+      logout();
+      navigate("/login");
+      return false;
+    }
+    return true;
+  }, [isLoggedIn, authToken, logout, navigate, notify]);
+
+  const validateOrderData = useCallback((): boolean => {
+    if (totalQuantity <= 0) {
+      notify(UI_MESSAGES.ORDER_QUANTITY_REQUIRED);
+      return false;
+    }
+    if (!productInfo) {
+      notify(UI_MESSAGES.PRODUCT_INFO_LOADING);
+      return false;
+    }
+    if (finalReceivers.length === 0) {
+      notify(UI_MESSAGES.RECEIVER_REQUIRED);
+      return false;
+    }
+    if (!senderName) {
+      notify(UI_MESSAGES.SENDER_NAME_REQUIRED);
+      return false;
+    }
+    if (!messageContent) {
+      notify(UI_MESSAGES.MESSAGE_CONTENT_REQUIRED);
+      return false;
+    }
+    return true;
+  }, [
+    totalQuantity,
+    productInfo,
+    finalReceivers,
+    senderName,
+    messageContent,
+    notify,
+  ]);
+
   const orderMutation = useMutation({
     mutationFn: async () => {
       const payload = {
@@ -117,43 +148,20 @@ const GiftOrderPage = () => {
     },
   });
 
-  // 주문 로직 (버튼 등에서 호출)
-  const handleOrderSubmit = () => {
-    if (orderMutation.isPending) return;
+  const handleOrderSubmit = useCallback(() => {
+    if (orderMutation.isPending) {
+      return;
+    }
 
-    if (!isLoggedIn) {
-      notify(UI_MESSAGES.LOGIN_REQUIRED);
-      navigate("/login");
+    if (!validateAuth()) {
       return;
     }
-    if (!authToken) {
-      notify(UI_MESSAGES.AUTH_TOKEN_MISSING);
-      logout();
-      navigate("/login");
+    if (!validateOrderData()) {
       return;
     }
-    if (totalQuantity <= 0) {
-      notify(UI_MESSAGES.ORDER_QUANTITY_REQUIRED);
-      return;
-    }
-    if (!productInfo) {
-      notify(UI_MESSAGES.PRODUCT_INFO_LOADING);
-      return;
-    }
-    if (finalReceivers.length === 0) {
-      notify(UI_MESSAGES.RECEIVER_REQUIRED);
-      return;
-    }
-    if (!senderName) {
-      notify(UI_MESSAGES.SENDER_NAME_REQUIRED);
-      return;
-    }
-    if (!messageContent) {
-      notify(UI_MESSAGES.MESSAGE_CONTENT_REQUIRED);
-      return;
-    }
+
     orderMutation.mutate();
-  };
+  }, [validateAuth, validateOrderData, orderMutation]);
 
   if (!productId) {
     return (
