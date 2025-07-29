@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BUTTON_TYPES } from "../../constants/buttontypes";
+import { BUTTON_TYPES } from "../../constants/buttonTypes";
 import type { ButtonConfig } from "../../types/button";
 
 interface SmallButtonProps {
