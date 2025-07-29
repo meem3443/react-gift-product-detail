@@ -1,21 +1,21 @@
-interface ReceiverDetail {
-  name: string;
+import apiClient from "./index";
+import { setAuthToken } from "./index";
 
+export interface ReceiverDetail {
+  name: string;
   phoneNumber: string;
   quantity: number;
 }
 
-interface OrderRequestPayload {
+export interface OrderRequestPayload {
   productId: number;
   message: string;
-
   messageCardId: string;
-
   ordererName: string;
   receivers: ReceiverDetail[];
 }
 
-interface OrderResponseData {
+export interface OrderResponseData {
   success: boolean;
 }
 
@@ -31,32 +31,23 @@ export const orderApi = async (
   authToken: string
 ): Promise<OrderResponseData> => {
   try {
-    const response = await fetch("http://localhost:3000/api/order", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: authToken,
-      },
-      body: JSON.stringify(payload),
-    });
+    setAuthToken(authToken);
 
-    if (response.status === 401) {
-      throw new Error("UNAUTHORIZED_ORDER");
-    }
+    // Axios의 post 메서드는 AxiosResponse 객체를 반환합니다.
+    // 하지만 인터셉터에서 이미 실제 데이터만 추출하여 반환하므로,
+    // 여기서 받는 'response' 변수는 이미 OrderResponseData 타입의 데이터입니다.
+    // TypeScript가 이를 알도록 하기 위해 'unknown'을 거쳐 'OrderResponseData'로 안전하게 캐스팅합니다.
+    const data = (await apiClient.post<OrderResponseData>(
+      "/api/order",
+      payload
+    )) as unknown as OrderResponseData;
 
-    if (!response.ok) {
-      const errorData: { message?: string } = await response.json();
-
-      throw new Error(errorData.message || "주문 요청에 실패했습니다.");
-    }
-
-    const result: { data: OrderResponseData } = await response.json();
-    return result.data;
+    console.log(data);
+    return data;
   } catch (error) {
     console.error("Order API Error:", error);
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error("네트워크 오류 또는 알 수 없는 오류가 발생했습니다.");
+    throw error;
+  } finally {
+    setAuthToken(null);
   }
 };

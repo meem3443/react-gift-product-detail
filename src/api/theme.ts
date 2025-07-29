@@ -1,3 +1,5 @@
+import apiClient from "./index";
+
 export interface Theme {
   themeId: number;
   name: string;
@@ -34,77 +36,47 @@ export interface ThemeProductListResponse {
   hasMoreList: boolean;
 }
 
+// 테마 목록 조회 API
 export const getThemes = async (): Promise<Theme[]> => {
   try {
-    const response = await fetch("http://localhost:3000/api/themes");
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData.data?.message || "테마 목록을 불러오는데 실패했습니다."
-      );
-    }
-    const result = await response.json();
-    return result.data;
+    // apiClient.get의 반환 타입이 Theme[] 임을 'as' 키워드로 단언합니다.
+    const themes = (await apiClient.get("/api/themes")) as Theme[]; // <--- 이 부분이 핵심 수정!
+    return themes;
   } catch (error) {
     console.error("Failed to fetch themes:", error);
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error(
-      "네트워크 오류 또는 알 수 없는 테마 목록 조회 오류가 발생했습니다."
-    );
+    throw error;
   }
 };
 
-// ⭐ 새로 추가할 API 함수: 테마 상세 정보 조회
+// 테마 상세 정보 조회 API
 export const getThemeInfo = async (themeId: number): Promise<ThemeDetail> => {
   try {
-    const response = await fetch(
-      `http://localhost:3000/api/themes/${themeId}/info`
-    );
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData.data?.message || "테마 상세 정보를 불러오는데 실패했습니다."
-      );
-    }
-    const result = await response.json();
-    return result.data;
+    // apiClient.get의 반환 타입이 ThemeDetail 임을 'as' 키워드로 단언합니다.
+    const themeInfo = (await apiClient.get(
+      `/api/themes/${themeId}/info`
+    )) as ThemeDetail; // <--- 이 부분이 핵심 수정!
+    return themeInfo;
   } catch (error) {
     console.error(`Failed to fetch theme info for ${themeId}:`, error);
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error(
-      "네트워크 오류 또는 알 수 없는 테마 상세 정보 조회 오류가 발생했습니다."
-    );
+    throw error;
   }
 };
 
+// 테마 상품 목록 조회 API
 export const getThemeProducts = async (
   themeId: number,
   cursor: number = 0,
   limit: number = 10
 ): Promise<ThemeProductListResponse> => {
   try {
-    const response = await fetch(
-      `http://localhost:3000/api/themes/${themeId}/products?cursor=${cursor}&limit=${limit}`
-    );
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData.data?.message || "테마별 상품 목록을 불러오는데 실패했습니다."
-      );
-    }
-    const result = await response.json();
-    return result.data;
+    // apiClient.get의 반환 타입이 ThemeProductListResponse 임을 'as' 키워드로 단언합니다.
+    const themeProducts = (await apiClient.get(
+      `/api/themes/${themeId}/products`,
+      { params: { cursor, limit } }
+    )) as ThemeProductListResponse; // <--- 이 부분이 핵심 수정!
+    return themeProducts;
   } catch (error) {
     console.error(`Failed to fetch products for theme ${themeId}:`, error);
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error(
-      "네트워크 오류 또는 알 수 없는 테마별 상품 목록 조회 오류가 발생했습니다."
-    );
+    throw error;
   }
 };

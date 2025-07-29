@@ -1,42 +1,33 @@
+import apiClient, { setAuthToken } from "./index";
+
 interface LoginResponseData {
   email: string;
   name: string;
   authToken: string;
 }
 
-interface LoginErrorData {
-  status: string;
-  statusCode: number;
-  message: string;
-}
-
-// 로그인 요청 함수
 export const loginApi = async (
   email: string,
   password: string
 ): Promise<LoginResponseData> => {
   try {
-    const response = await fetch("http://localhost:3000/api/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    // Axios의 post 메서드는 AxiosResponse 객체를 반환합니다.
+    // 하지만 당신의 apiClient 인터셉터는 이미 data를 추출해서 반환하므로,
+    // 여기서 그 반환값을 `LoginResponseData` 타입으로 단언해줍니다.
+    const response = (await apiClient.post<LoginResponseData>("/api/login", {
+      email,
+      password,
+    })) as unknown as LoginResponseData; // 👈 이 부분에서 `LoginResponseData`로 타입 단언
 
-    // HTTP 상태 코드가 2xx가 아니면 에러 처리
-    if (!response.ok) {
-      const errorData: { data: LoginErrorData } = await response.json();
-      throw new Error(errorData.data.message || "로그인에 실패했습니다.");
-    }
+    console.log("Login API로부터 받은 응답:", response);
 
-    const result: { data: LoginResponseData } = await response.json();
-    return result.data;
+    // 'response'는 이제 LoginResponseData 타입으로 간주되므로, 직접 속성에 접근합니다.
+    setAuthToken(response.authToken);
+
+    // 'response'는 LoginResponseData 타입이므로, 바로 반환합니다.
+    return response;
   } catch (error) {
     console.error("Login API Error:", error);
-    if (error instanceof Error) {
-      throw error; // 이미 Error 객체인 경우 그대로 던지기
-    }
-    throw new Error("네트워크 오류 또는 알 수 없는 오류가 발생했습니다.");
+    throw error;
   }
 };
