@@ -37,7 +37,7 @@ export const ProductDetailBarSection = ({
     navigate(`/order/${productId}`);
   };
 
-  const heartIconSrc = isWished ? "/heart_filled-red.svg" : "/heart.svg";
+  const heartIconSrc = isWished ? "/heart_fill.svg" : "/heart.svg";
 
   return (
     <div className="w-full fixed bottom-0 left-0 right-0 bg-white p-3 border-t border-gray-200 shadow-lg z-10">
