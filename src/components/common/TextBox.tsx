@@ -1,6 +1,6 @@
 import React from "react";
 import { SmallButton } from "./SmallButton";
-import type { BUTTON_TYPES } from "../../constants/buttontypes";
+import type { BUTTON_TYPES } from "../../constants/buttonTypes";
 
 interface TextBoxProps {
   backgroundColorType?: "default" | "yellow" | "blue";

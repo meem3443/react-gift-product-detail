@@ -10,6 +10,10 @@ export const BUTTON_TYPES: ButtonTypes = {
     text: "+",
     className: "bg-yellow-300 rounded-xl text-black  w-10 h-10 text-xl",
   },
+  LIKE: {
+    text: "",
+    className: "bg-yellow-300 rounded-xl text-black  w-10 h-10 text-xl",
+  },
   NONE: {
     text: "",
     className: "hidden",

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ImgBox } from "../common/ImgBox";
 import { RankingProductList } from "./RankingProductList";
 import {
@@ -9,50 +9,26 @@ import {
 } from "../../api/product";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
+import { FILTER_OPTIONS, SORT_OPTIONS } from "../../constants/rankingOptions";
 
-const filterOptions: { id: TargetType; label: string; img: string }[] = [
-  { id: "ALL", label: "전체", img: "ALL" },
-  { id: "FEMALE", label: "여성이", img: "👩🏻" },
-  { id: "MALE", label: "남성이", img: "👱🏻‍♂️" },
-  { id: "TEEN", label: "청소년이", img: "🧑🏻‍🎓" },
-];
-
-const sortOptions: { id: RankType; label: string }[] = [
-  { id: "MANY_WISH", label: "받고 싶어한" },
-  { id: "MANY_RECEIVE", label: "많이 선물한" },
-  { id: "MANY_WISH_RECEIVE", label: "위시로 받은" },
-];
+import { useQuery } from "@tanstack/react-query";
 
 export const SortOptionSection = () => {
   const [activeFilter, setActiveFilter] = useState<TargetType>("ALL");
   const [activeSort, setActiveSort] = useState<RankType>("MANY_WISH");
-  const [rankingProducts, setRankingProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
 
-  useEffect(() => {
-    const fetchRanking = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getRankingProducts(activeFilter, activeSort);
-        setRankingProducts(data);
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("상품 랭킹을 불러오는 중 알 수 없는 오류가 발생했습니다.");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+  const {
+    data: rankingProducts,
+    isLoading,
+    error,
+  } = useQuery<Product[], Error>({
+    queryKey: ["rankingProducts", activeFilter, activeSort],
 
-    fetchRanking();
-  }, [activeFilter, activeSort]);
+    queryFn: () => getRankingProducts(activeFilter, activeSort),
+  });
 
   const handleProductClick = (productId: number) => {
     if (isLoggedIn) {
@@ -66,7 +42,7 @@ export const SortOptionSection = () => {
   return (
     <div className="w-full bg-white py-4 px-6">
       <div className="flex justify-around items-start mb-6">
-        {filterOptions.map((option) => (
+        {FILTER_OPTIONS.map((option) => (
           <div key={option.id}>
             <ImgBox
               category={option.label}
@@ -79,7 +55,7 @@ export const SortOptionSection = () => {
       </div>
 
       <div className="bg-gray-100 rounded-lg p-3 flex justify-around items-center">
-        {sortOptions.map((option) => (
+        {SORT_OPTIONS.map((option) => (
           <button
             key={option.id}
             className={`
@@ -101,8 +77,8 @@ export const SortOptionSection = () => {
       <div className="mt-6">
         <h3 className="text-lg font-bold mb-4">현재 랭킹</h3>
         <RankingProductList
-          products={rankingProducts}
-          loading={loading}
+          products={rankingProducts || []}
+          loading={isLoading}
           error={error}
           onProductClick={handleProductClick}
           isNumVisibleOption={true}
