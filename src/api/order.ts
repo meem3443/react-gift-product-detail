@@ -1,5 +1,5 @@
 import apiClient from "./index";
-import { setAuthToken, type ApiResponseWrapper } from "./index";
+import { setAuthToken } from "./index";
 
 export interface ReceiverDetail {
   name: string;
@@ -33,13 +33,13 @@ export const orderApi = async (
   try {
     setAuthToken(authToken);
 
-    const response = await apiClient.post<
-      ApiResponseWrapper<OrderResponseData>
-    >("/api/order", payload);
-    const orderData = response.data.data;
+    const data = (await apiClient.post<OrderResponseData>(
+      "/api/order",
+      payload
+    )) as unknown as OrderResponseData;
 
-    console.log(orderData);
-    return orderData;
+    console.log(data);
+    return data;
   } catch (error) {
     console.error("Order API Error:", error);
     throw error;

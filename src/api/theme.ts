@@ -1,4 +1,5 @@
-import apiClient, { type ApiResponseWrapper } from "./index";
+import apiClient from "./index";
+import { type ApiResponseWrapper } from "./index";
 
 export interface Theme {
   themeId: number;
@@ -41,7 +42,16 @@ export const getThemes = async (): Promise<Theme[]> => {
     const response = await apiClient.get<ApiResponseWrapper<Theme[]>>(
       "/api/themes"
     );
+
     const themes = response.data.data;
+
+    console.log("getThemes API 응답:", themes);
+
+    if (!Array.isArray(themes)) {
+      console.error("API 응답이 예상된 배열 구조가 아닙니다.", themes);
+      throw new Error("API 응답 데이터가 유효한 테마 목록이 아닙니다.");
+    }
+
     return themes;
   } catch (error) {
     console.error("Failed to fetch themes:", error);

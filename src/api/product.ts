@@ -1,4 +1,5 @@
-import apiClient, { type ApiResponseWrapper } from "./index";
+import apiClient from "./index";
+import { type ApiResponseWrapper } from "./index";
 
 export interface ProductPrice {
   basicPrice: number;
@@ -75,8 +76,17 @@ export const getRankingProducts = async (
         params: { targetType, rankType },
       }
     );
+
     const data = response.data.data;
-    return Array.isArray(data) ? data : [];
+
+    if (!Array.isArray(data)) {
+      console.warn(
+        "API 응답 데이터가 예상된 배열 구조가 아닙니다.",
+        response.data
+      );
+      return [];
+    }
+    return data;
   } catch (error) {
     console.error(`Failed to fetch ranking products:`, error);
     throw error;
@@ -85,8 +95,6 @@ export const getRankingProducts = async (
 
 /**
  * 상품 기본 정보 조회 API
- * @param productId 상품 ID
- * @returns 상품 기본 정보 (Product)
  */
 export const getProductInfo = async (productId: number): Promise<Product> => {
   try {
@@ -94,6 +102,7 @@ export const getProductInfo = async (productId: number): Promise<Product> => {
       `/api/products/${productId}`
     );
     const productInfo = response.data.data;
+    console.log("상품 기본 정보:", productInfo);
     return productInfo;
   } catch (error) {
     console.error(`Failed to fetch product info for ${productId}:`, error);
@@ -103,8 +112,6 @@ export const getProductInfo = async (productId: number): Promise<Product> => {
 
 /**
  * 상품 상세 정보 조회 API
- * @param productId 상품 ID
- * @returns 상품 상세 정보 (ProductDetail)
  */
 export const getProductDetail = async (
   productId: number
@@ -114,6 +121,7 @@ export const getProductDetail = async (
       `/api/products/${productId}/detail`
     );
     const productDetailData = response.data.data;
+    console.log("상품 상세 정보:", productDetailData);
     return productDetailData;
   } catch (error) {
     console.error(`Failed to fetch product detail for ${productId}:`, error);
@@ -123,8 +131,6 @@ export const getProductDetail = async (
 
 /**
  * 상품 찜 정보 조회 API
- * @param productId 상품 ID
- * @returns 상품 찜 정보 (WishInfo)
  */
 export const getProductWishInfo = async (
   productId: number
@@ -134,17 +140,17 @@ export const getProductWishInfo = async (
       `/api/products/${productId}/wish`
     );
     const data = response.data.data;
+    console.log("로그 찍어보는중 (data):", data);
     return data;
   } catch (error) {
     console.error(`Failed to fetch product wish info for ${productId}:`, error);
+    console.log("로그 찍어보는중 (에러):", error);
     throw error;
   }
 };
 
 /**
  * 상품 하이라이트 리뷰 조회 API
- * @param productId 상품 ID
- * @returns 상품 하이라이트 리뷰 목록 (HighlightReviewsResponse)
  */
 export const getProductHighlightReviews = async (
   productId: number
@@ -166,8 +172,6 @@ export const getProductHighlightReviews = async (
 
 /**
  * 상품 요약 정보 조회 API
- * @param productId 상품 ID
- * @returns 상품 요약 정보 (ProductSummary)
  */
 export const getProductSummary = async (
   productId: number

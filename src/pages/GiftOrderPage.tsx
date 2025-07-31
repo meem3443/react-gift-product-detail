@@ -2,7 +2,7 @@ import { useMemo, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
 
 import OrderConfirmSection from "../components/OrderComponent/OrderConfirmSection";
 import ReceiverSection from "../components/OrderComponent/ReceiverSection";
@@ -19,6 +19,8 @@ import { UI_MESSAGES } from "../constants/message";
 
 const GiftOrderPage = () => {
   const { productId } = useParams<{ productId: string }>();
+  const parsedProductId = productId ? parseInt(productId, 10) : undefined;
+
   const navigate = useNavigate();
   const { isLoggedIn, authToken, logout } = useAuth();
   const notify = useCallback((message: string) => toast(message), []);
@@ -27,17 +29,16 @@ const GiftOrderPage = () => {
   const [senderName, setSenderName] = useState<string>("");
   const [messageContent, setMessageContent] = useState<string>("");
 
-  const enabled = !!productId;
-  const parsedProductId = productId ? parseInt(productId, 10) : undefined;
+  const getValidatedProductId = useCallback((): number => {
+    if (parsedProductId === undefined || Number.isNaN(parsedProductId)) {
+      throw new Error(UI_MESSAGES.PRODUCT_ID_MISSING);
+    }
+    return parsedProductId;
+  }, [parsedProductId]);
 
-  const {
-    data: productInfo,
-    isLoading: isInfoLoading,
-    error: infoError,
-  } = useQuery<Product, Error>({
+  const { data: productInfo } = useSuspenseQuery<Product, Error>({
     queryKey: ["productInfo", parsedProductId],
-    enabled,
-    queryFn: () => getProductInfo(parsedProductId!),
+    queryFn: () => getProductInfo(getValidatedProductId()),
     retry: false,
   });
 
@@ -46,7 +47,6 @@ const GiftOrderPage = () => {
   }, [finalReceivers]);
 
   const totalPrice = useMemo(() => {
-    if (!productInfo) return 0;
     const unitPrice = productInfo.price.sellingPrice;
     return totalQuantity * unitPrice;
   }, [totalQuantity, productInfo]);
@@ -71,10 +71,6 @@ const GiftOrderPage = () => {
       notify(UI_MESSAGES.ORDER_QUANTITY_REQUIRED);
       return false;
     }
-    if (!productInfo) {
-      notify(UI_MESSAGES.PRODUCT_INFO_LOADING);
-      return false;
-    }
     if (finalReceivers.length === 0) {
       notify(UI_MESSAGES.RECEIVER_REQUIRED);
       return false;
@@ -88,19 +84,12 @@ const GiftOrderPage = () => {
       return false;
     }
     return true;
-  }, [
-    totalQuantity,
-    productInfo,
-    finalReceivers,
-    senderName,
-    messageContent,
-    notify,
-  ]);
+  }, [totalQuantity, finalReceivers, senderName, messageContent, notify]);
 
   const orderMutation = useMutation({
     mutationFn: async () => {
       const payload = {
-        productId: parsedProductId!,
+        productId: getValidatedProductId(),
         message: messageContent,
         messageCardId: "default-card-id",
         ordererName: senderName,
@@ -116,9 +105,9 @@ const GiftOrderPage = () => {
       if (result.success) {
         toast.success(UI_MESSAGES.ORDER_SUCCESS, {
           onClose: () => {
-            alert(
+            notify(
               `주문이 완료 되었습니다. \n 상품명: ${
-                productInfo!.name
+                productInfo.name // productInfo는 이제 항상 유효합니다.
               } \n 구매 수량: ${totalQuantity}\n 발신자 이름: ${senderName}\n 메시지: ${messageContent}`
             );
             navigate("/");
@@ -162,38 +151,6 @@ const GiftOrderPage = () => {
 
     orderMutation.mutate();
   }, [validateAuth, validateOrderData, orderMutation]);
-
-  if (!productId) {
-    return (
-      <div className="container mx-auto py-10 text-center text-xl font-bold text-red-700">
-        {UI_MESSAGES.PRODUCT_ID_MISSING}
-      </div>
-    );
-  }
-
-  if (isInfoLoading) {
-    return (
-      <div className="container mx-auto py-10 text-center text-xl font-bold text-gray-700">
-        {UI_MESSAGES.PRODUCT_INFO_LOADING.replace("...", " 중...")}{" "}
-      </div>
-    );
-  }
-
-  if (infoError) {
-    return (
-      <div className="container mx-auto py-10 text-center text-xl font-bold text-red-700">
-        오류: {infoError.message}
-      </div>
-    );
-  }
-
-  if (!productInfo) {
-    return (
-      <div className="container mx-auto py-10 text-center text-xl font-bold text-gray-700">
-        {UI_MESSAGES.PRODUCT_NOT_FOUND}
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-100 px-4 pt-4 pb-[80px]">

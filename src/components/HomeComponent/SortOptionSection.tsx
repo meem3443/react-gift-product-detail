@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 import { FILTER_OPTIONS, SORT_OPTIONS } from "../../constants/rankingOptions";
 
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 export const SortOptionSection = () => {
   const [activeFilter, setActiveFilter] = useState<TargetType>("ALL");
@@ -20,19 +20,14 @@ export const SortOptionSection = () => {
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
 
-  const {
-    data: rankingProducts,
-    isLoading,
-    error,
-  } = useQuery<Product[], Error>({
+  const { data: rankingProducts } = useSuspenseQuery<Product[], Error>({
     queryKey: ["rankingProducts", activeFilter, activeSort],
-
     queryFn: () => getRankingProducts(activeFilter, activeSort),
   });
 
   const handleProductClick = (productId: number) => {
     if (isLoggedIn) {
-      navigate(`/order/${productId}`);
+      navigate(`/product/${productId}`);
     } else {
       alert("로그인이 필요합니다.");
       navigate("/login");
@@ -77,9 +72,7 @@ export const SortOptionSection = () => {
       <div className="mt-6">
         <h3 className="text-lg font-bold mb-4">현재 랭킹</h3>
         <RankingProductList
-          products={rankingProducts || []}
-          loading={isLoading}
-          error={error}
+          products={rankingProducts}
           onProductClick={handleProductClick}
           isNumVisibleOption={true}
         />

@@ -1,4 +1,4 @@
-import apiClient, { setAuthToken, type ApiResponseWrapper } from "./index";
+import apiClient, { setAuthToken } from "./index";
 
 interface LoginResponseData {
   email: string;
@@ -11,18 +11,16 @@ export const loginApi = async (
   password: string
 ): Promise<LoginResponseData> => {
   try {
-    const response = await apiClient.post<
-      ApiResponseWrapper<LoginResponseData>
-    >("/api/login", {
+    const response = (await apiClient.post<LoginResponseData>("/api/login", {
       email,
       password,
-    });
-    const loginData = response.data.data;
+    })) as unknown as LoginResponseData;
 
-    console.log("Login API로부터 받은 응답:", loginData);
+    console.log("Login API로부터 받은 응답:", response);
 
-    setAuthToken(loginData.authToken);
-    return loginData;
+    setAuthToken(response.authToken);
+
+    return response;
   } catch (error) {
     console.error("Login API Error:", error);
     throw error;
