@@ -109,7 +109,7 @@ export const ThemeProductsPage = () => {
   }, [loadMoreProducts, hasMore, loading]);
 
   const handleProductClick = (productId: number) => {
-    navigate(`/order/${productId}`);
+    navigate(`/product/${productId}`);
   };
 
   if (loading && products.length === 0) {
