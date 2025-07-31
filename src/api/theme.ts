@@ -1,4 +1,5 @@
 import apiClient from "./index";
+import { type ApiResponseWrapper } from "./index";
 
 export interface Theme {
   themeId: number;
@@ -36,11 +37,21 @@ export interface ThemeProductListResponse {
   hasMoreList: boolean;
 }
 
-// 테마 목록 조회 API
 export const getThemes = async (): Promise<Theme[]> => {
   try {
-    // apiClient.get의 반환 타입이 Theme[] 임을 'as' 키워드로 단언합니다.
-    const themes = (await apiClient.get("/api/themes")) as Theme[]; // <--- 이 부분이 핵심 수정!
+    const response = await apiClient.get<ApiResponseWrapper<Theme[]>>(
+      "/api/themes"
+    );
+
+    const themes = response.data.data;
+
+    console.log("getThemes API 응답:", themes);
+
+    if (!Array.isArray(themes)) {
+      console.error("API 응답이 예상된 배열 구조가 아닙니다.", themes);
+      throw new Error("API 응답 데이터가 유효한 테마 목록이 아닙니다.");
+    }
+
     return themes;
   } catch (error) {
     console.error("Failed to fetch themes:", error);
@@ -48,13 +59,12 @@ export const getThemes = async (): Promise<Theme[]> => {
   }
 };
 
-// 테마 상세 정보 조회 API
 export const getThemeInfo = async (themeId: number): Promise<ThemeDetail> => {
   try {
-    // apiClient.get의 반환 타입이 ThemeDetail 임을 'as' 키워드로 단언합니다.
     const themeInfo = (await apiClient.get(
       `/api/themes/${themeId}/info`
-    )) as ThemeDetail; // <--- 이 부분이 핵심 수정!
+    )) as ThemeDetail;
+    console.log("getThemeInfo API 응답:", themeInfo);
     return themeInfo;
   } catch (error) {
     console.error(`Failed to fetch theme info for ${themeId}:`, error);
@@ -62,18 +72,16 @@ export const getThemeInfo = async (themeId: number): Promise<ThemeDetail> => {
   }
 };
 
-// 테마 상품 목록 조회 API
 export const getThemeProducts = async (
   themeId: number,
   cursor: number = 0,
   limit: number = 10
 ): Promise<ThemeProductListResponse> => {
   try {
-    // apiClient.get의 반환 타입이 ThemeProductListResponse 임을 'as' 키워드로 단언합니다.
     const themeProducts = (await apiClient.get(
       `/api/themes/${themeId}/products`,
       { params: { cursor, limit } }
-    )) as ThemeProductListResponse; // <--- 이 부분이 핵심 수정!
+    )) as ThemeProductListResponse;
     return themeProducts;
   } catch (error) {
     console.error(`Failed to fetch products for theme ${themeId}:`, error);
