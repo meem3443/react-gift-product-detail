@@ -61,10 +61,10 @@ export const getThemes = async (): Promise<Theme[]> => {
 
 export const getThemeInfo = async (themeId: number): Promise<ThemeDetail> => {
   try {
-    const themeInfo = (await apiClient.get(
+    const response = await apiClient.get<ApiResponseWrapper<ThemeDetail>>(
       `/api/themes/${themeId}/info`
-    )) as ThemeDetail;
-    console.log("getThemeInfo API 응답:", themeInfo);
+    );
+    const themeInfo = response.data.data;
     return themeInfo;
   } catch (error) {
     console.error(`Failed to fetch theme info for ${themeId}:`, error);
@@ -78,10 +78,10 @@ export const getThemeProducts = async (
   limit: number = 10
 ): Promise<ThemeProductListResponse> => {
   try {
-    const themeProducts = (await apiClient.get(
-      `/api/themes/${themeId}/products`,
-      { params: { cursor, limit } }
-    )) as ThemeProductListResponse;
+    const response = await apiClient.get<
+      ApiResponseWrapper<ThemeProductListResponse>
+    >(`/api/themes/${themeId}/products`, { params: { cursor, limit } });
+    const themeProducts = response.data.data;
     return themeProducts;
   } catch (error) {
     console.error(`Failed to fetch products for theme ${themeId}:`, error);
