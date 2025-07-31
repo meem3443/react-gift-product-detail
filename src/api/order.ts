@@ -1,5 +1,5 @@
 import apiClient from "./index";
-import { setAuthToken } from "./index";
+import { setAuthToken, type ApiResponseWrapper } from "./index";
 
 export interface ReceiverDetail {
   name: string;
@@ -33,17 +33,13 @@ export const orderApi = async (
   try {
     setAuthToken(authToken);
 
-    // Axios의 post 메서드는 AxiosResponse 객체를 반환합니다.
-    // 하지만 인터셉터에서 이미 실제 데이터만 추출하여 반환하므로,
-    // 여기서 받는 'response' 변수는 이미 OrderResponseData 타입의 데이터입니다.
-    // TypeScript가 이를 알도록 하기 위해 'unknown'을 거쳐 'OrderResponseData'로 안전하게 캐스팅합니다.
-    const data = (await apiClient.post<OrderResponseData>(
-      "/api/order",
-      payload
-    )) as unknown as OrderResponseData;
+    const response = await apiClient.post<
+      ApiResponseWrapper<OrderResponseData>
+    >("/api/order", payload);
+    const orderData = response.data.data;
 
-    console.log(data);
-    return data;
+    console.log(orderData);
+    return orderData;
   } catch (error) {
     console.error("Order API Error:", error);
     throw error;
