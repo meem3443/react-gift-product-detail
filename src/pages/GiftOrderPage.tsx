@@ -57,14 +57,9 @@ const GiftOrderPage = () => {
       navigate("/login");
       return false;
     }
-    if (!authToken) {
-      notify(UI_MESSAGES.AUTH_TOKEN_MISSING);
-      logout();
-      navigate("/login");
-      return false;
-    }
+
     return true;
-  }, [isLoggedIn, authToken, logout, navigate, notify]);
+  }, [isLoggedIn, navigate, notify]);
 
   const validateOrderData = useCallback((): boolean => {
     if (totalQuantity <= 0) {
