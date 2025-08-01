@@ -3,7 +3,7 @@ import { useUserGreeting } from "../../hooks/useUserGreeting";
 
 const FriendSelectSection = () => {
   const handleFreindSelectButtonClick = () => {
-    console.log("친구 선택 버튼 클릭!");
+    //("친구 선택 버튼 클릭!");
   };
 
   const { isLoggedIn, nickname } = useUserGreeting();
