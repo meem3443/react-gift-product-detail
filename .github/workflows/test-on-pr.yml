@@ -1,0 +1,27 @@
+name: Run Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js (or your language)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22" # 원하는 Node.js 버전으로 변경하세요
+
+      - name: Install dependencies
+        run: npm install # 여러분의 프로젝트에 맞는 의존성 설치 명령어로 변경하세요 (예: yarn install)
+
+      - name: Run tests
+        run: npm test # 여러분의 테스트 실행 명령어로 변경하세요 (예: yarn test)
