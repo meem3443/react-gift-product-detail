@@ -45,7 +45,7 @@ export const getThemes = async (): Promise<Theme[]> => {
 
     const themes = response.data.data;
 
-    console.log("getThemes API 응답:", themes);
+    //("getThemes API 응답:", themes);
 
     if (!Array.isArray(themes)) {
       console.error("API 응답이 예상된 배열 구조가 아닙니다.", themes);

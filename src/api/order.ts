@@ -38,7 +38,7 @@ export const orderApi = async (
       payload
     )) as unknown as OrderResponseData;
 
-    console.log(data);
+    //(data);
     return data;
   } catch (error) {
     console.error("Order API Error:", error);

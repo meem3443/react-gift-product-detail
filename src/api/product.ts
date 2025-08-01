@@ -102,7 +102,7 @@ export const getProductInfo = async (productId: number): Promise<Product> => {
       `/api/products/${productId}`
     );
     const productInfo = response.data.data;
-    console.log("상품 기본 정보:", productInfo);
+    //("상품 기본 정보:", productInfo);
     return productInfo;
   } catch (error) {
     console.error(`Failed to fetch product info for ${productId}:`, error);
@@ -121,7 +121,7 @@ export const getProductDetail = async (
       `/api/products/${productId}/detail`
     );
     const productDetailData = response.data.data;
-    console.log("상품 상세 정보:", productDetailData);
+    //("상품 상세 정보:", productDetailData);
     return productDetailData;
   } catch (error) {
     console.error(`Failed to fetch product detail for ${productId}:`, error);
@@ -140,11 +140,11 @@ export const getProductWishInfo = async (
       `/api/products/${productId}/wish`
     );
     const data = response.data.data;
-    console.log("로그 찍어보는중 (data):", data);
+    //("로그 찍어보는중 (data):", data);
     return data;
   } catch (error) {
     console.error(`Failed to fetch product wish info for ${productId}:`, error);
-    console.log("로그 찍어보는중 (에러):", error);
+    //("로그 찍어보는중 (에러):", error);
     throw error;
   }
 };
