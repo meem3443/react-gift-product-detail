@@ -29,6 +29,7 @@ export const ThemeProductsPage = () => {
       setLoading(true);
       const id = parseInt(themeId, 10);
       const productResponse = await getThemeProducts(id, cursor, 10);
+      console.log("추가 상품:", productResponse);
 
       setProducts((prevProducts) => [...prevProducts, ...productResponse.list]);
       setCursor(productResponse.cursor);
@@ -109,7 +110,7 @@ export const ThemeProductsPage = () => {
   }, [loadMoreProducts, hasMore, loading]);
 
   const handleProductClick = (productId: number) => {
-    navigate(`/order/${productId}`);
+    navigate(`/product/${productId}`);
   };
 
   if (loading && products.length === 0) {

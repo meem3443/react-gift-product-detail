@@ -1,0 +1,67 @@
+// src/components/HomeComponent/SortOptionSection.test.tsx
+import { render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import userEvent from "@testing-library/user-event";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { BrowserRouter } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { AuthContext, type AuthContextType } from "../../contexts/AuthContext";
+import { SortOptionSection } from "./SortOptionSection";
+
+// 테스트용 Mock 함수 선언
+const mockLogin = vi.fn<(email: string, password: string) => Promise<void>>();
+const mockLogout = vi.fn<() => void>();
+
+const queryClient = new QueryClient();
+
+const authLoggedIn: AuthContextType = {
+  user: { email: "test@kakao.com", name: "테스트유저" },
+  authToken: "mock-token",
+  login: mockLogin,
+  logout: mockLogout,
+};
+
+const authLoggedOut: AuthContextType = {
+  user: null,
+  authToken: null,
+  login: mockLogin,
+  logout: mockLogout,
+};
+
+describe("SortOptionSection", () => {
+  let mockNavigate: ReturnType<typeof vi.fn>;
+
+  // react-router-dom 모킹
+  vi.mock("react-router-dom", async () => {
+    const actual = await vi.importActual<typeof import("react-router-dom")>(
+      "react-router-dom"
+    );
+    return {
+      ...actual,
+      useNavigate: vi.fn(),
+    };
+  });
+
+  beforeEach(() => {
+    mockNavigate = vi.fn();
+    vi.mocked(useNavigate).mockReturnValue(mockNavigate);
+  });
+
+  it("초기 렌더 시 랭킹 데이터가 보인다", async () => {
+    render(
+      <BrowserRouter>
+        <AuthContext.Provider value={authLoggedIn}>
+          <QueryClientProvider client={queryClient}>
+            <SortOptionSection />
+          </QueryClientProvider>
+        </AuthContext.Provider>
+      </BrowserRouter>
+    );
+    await waitFor(() => {
+      expect(screen.getByText("스트로베리 초콜릿 생크림")).toBeInTheDocument();
+    });
+  });
+
+  // 필요하면 userEvent를 활용하는 테스트 케이스 추가하세요.
+  // 예를 들어, 로그인 상태에서 상품 클릭시 이동 등
+});

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
     "target": "ES2023",
-    "lib": ["ES2023"],
+    "lib": ["ES2023", "DOM"], // 'DOM' 라이브러리 추가: Jest-DOM과 같은 환경에서 필요합니다.
     "module": "ESNext",
     "skipLibCheck": true,
 
@@ -17,9 +17,20 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
+    "erasableSyntaxOnly": true, // 이 옵션은 TypeScript 5.5 이상에서 제거될 예정이니 주의하세요.
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    // Vitest 전역 타입 및 @testing-library/jest-dom 확장 매처를 인식하도록 'types' 추가
+    "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
-  "include": ["vite.config.ts"]
+  "include": [
+    "vite.config.ts",
+    // 여기에 Vitest 테스트 파일과 관련된 경로를 추가해야 합니다.
+    "src/**/*.test.ts", // .ts 테스트 파일
+    "src/**/*.test.tsx", // .tsx 테스트 파일
+    "src/setupTests.ts", // 테스트 셋업 파일 (Jest-DOM import 등)
+    "src/mocks/*.ts", // MSW 핸들러 등 mock 파일
+    "vitest.config.ts" // Vitest 설정 파일이 있다면 추가
+  ]
 }

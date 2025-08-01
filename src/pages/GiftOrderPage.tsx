@@ -1,21 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
 
 import OrderConfirmSection from "../components/OrderComponent/OrderConfirmSection";
 import ReceiverSection from "../components/OrderComponent/ReceiverSection";
 import SenderSection from "../components/OrderComponent/SenderSection";
 import ThanksCardSlideSection from "../components/OrderComponent/ThanksCardSlideSection";
-
 import ProductDetailCard from "../components/OrderComponent/Cards/ProductDetailCard";
 
-import {
-  getProductDetail,
-  getProductInfo,
-  type Product,
-  type ProductDetail as ProductDetailType,
-} from "../api/product";
+import { getProductInfo, type Product } from "../api/product";
 
 import type { ReceiverField } from "../schemas/receiverSchema";
 import { useAuth } from "../contexts/useAuth";
@@ -24,111 +19,77 @@ import { UI_MESSAGES } from "../constants/message";
 
 const GiftOrderPage = () => {
   const { productId } = useParams<{ productId: string }>();
+  const parsedProductId = productId ? parseInt(productId, 10) : undefined;
+
   const navigate = useNavigate();
   const { isLoggedIn, authToken, logout } = useAuth();
-  const notify = (message: string) => toast(message);
-
-  const [productInfo, setProductInfo] = useState<Product | null>(null);
-  const [, setProductDetailsFull] = useState<ProductDetailType | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const notify = useCallback((message: string) => toast(message), []);
 
   const [finalReceivers, setFinalReceivers] = useState<ReceiverField[]>([]);
-
   const [senderName, setSenderName] = useState<string>("");
-
   const [messageContent, setMessageContent] = useState<string>("");
 
-  const [isOrdering, setIsOrdering] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (!productId) {
-      setError(UI_MESSAGES.PRODUCT_ID_MISSING);
-      setLoading(false);
-      return;
+  const getValidatedProductId = useCallback((): number => {
+    if (parsedProductId === undefined || Number.isNaN(parsedProductId)) {
+      throw new Error(UI_MESSAGES.PRODUCT_ID_MISSING);
     }
+    return parsedProductId;
+  }, [parsedProductId]);
 
-    const fetchProductData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const id = parseInt(productId, 10);
-
-        const [info, detail] = await Promise.all([
-          getProductInfo(id),
-          getProductDetail(id),
-        ]);
-
-        setProductInfo(info);
-        setProductDetailsFull(detail);
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-          navigate("/");
-        } else {
-          setError(UI_MESSAGES.PRODUCT_INFO_FETCH_ERROR);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProductData();
-  }, [productId, navigate]);
+  const { data: productInfo } = useSuspenseQuery<Product, Error>({
+    queryKey: ["productInfo", parsedProductId],
+    queryFn: () => getProductInfo(getValidatedProductId()),
+    retry: false,
+  });
 
   const totalQuantity = useMemo(() => {
     return finalReceivers.reduce((sum, receiver) => sum + receiver.quantity, 0);
   }, [finalReceivers]);
 
   const totalPrice = useMemo(() => {
-    if (!productInfo) return 0;
     const unitPrice = productInfo.price.sellingPrice;
     return totalQuantity * unitPrice;
   }, [totalQuantity, productInfo]);
 
-  const handleOrderSubmit = async () => {
-    if (isOrdering) return;
-
-    console.log("현재 authToken:", authToken);
-    console.log("현재 isLoggedIn:", isLoggedIn);
+  const validateAuth = useCallback((): boolean => {
     if (!isLoggedIn) {
       notify(UI_MESSAGES.LOGIN_REQUIRED);
       navigate("/login");
-      return;
+      return false;
     }
     if (!authToken) {
       notify(UI_MESSAGES.AUTH_TOKEN_MISSING);
       logout();
       navigate("/login");
-      return;
+      return false;
     }
+    return true;
+  }, [isLoggedIn, authToken, logout, navigate, notify]);
+
+  const validateOrderData = useCallback((): boolean => {
     if (totalQuantity <= 0) {
       notify(UI_MESSAGES.ORDER_QUANTITY_REQUIRED);
-      return;
-    }
-    if (!productInfo) {
-      notify(UI_MESSAGES.PRODUCT_INFO_LOADING);
-      return;
+      return false;
     }
     if (finalReceivers.length === 0) {
       notify(UI_MESSAGES.RECEIVER_REQUIRED);
-      return;
+      return false;
     }
     if (!senderName) {
       notify(UI_MESSAGES.SENDER_NAME_REQUIRED);
-      return;
+      return false;
     }
     if (!messageContent) {
       notify(UI_MESSAGES.MESSAGE_CONTENT_REQUIRED);
-      return;
+      return false;
     }
+    return true;
+  }, [totalQuantity, finalReceivers, senderName, messageContent, notify]);
 
-    setIsOrdering(true);
-
-    try {
+  const orderMutation = useMutation({
+    mutationFn: async () => {
       const payload = {
-        productId: parseInt(productId!, 10),
+        productId: getValidatedProductId(),
         message: messageContent,
         messageCardId: "default-card-id",
         ordererName: senderName,
@@ -138,17 +99,15 @@ const GiftOrderPage = () => {
           quantity: rec.quantity,
         })),
       };
-
-      console.log("전송될 주문 페이로드:", JSON.stringify(payload, null, 2));
-
-      const result = await orderApi(payload, authToken);
-
+      return orderApi(payload, authToken!);
+    },
+    onSuccess: (result) => {
       if (result.success) {
         toast.success(UI_MESSAGES.ORDER_SUCCESS, {
           onClose: () => {
-            alert(
+            notify(
               `주문이 완료 되었습니다. \n 상품명: ${
-                productInfo!.name
+                productInfo.name // productInfo는 이제 항상 유효합니다.
               } \n 구매 수량: ${totalQuantity}\n 발신자 이름: ${senderName}\n 메시지: ${messageContent}`
             );
             navigate("/");
@@ -157,7 +116,8 @@ const GiftOrderPage = () => {
       } else {
         notify(UI_MESSAGES.ORDER_FAIL_API_RESPONSE);
       }
-    } catch (error) {
+    },
+    onError: (error: Error) => {
       if (error instanceof Error) {
         if (error.message === UI_MESSAGES.UNAUTHORIZED_ORDER) {
           toast.error(UI_MESSAGES.SESSION_EXPIRED, {
@@ -174,51 +134,31 @@ const GiftOrderPage = () => {
       } else {
         toast.error(UI_MESSAGES.ORDER_FAIL_UNKNOWN);
       }
-    } finally {
-      setIsOrdering(false);
+    },
+  });
+
+  const handleOrderSubmit = useCallback(() => {
+    if (orderMutation.isPending) {
+      return;
     }
-  };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto py-10 text-center text-xl font-bold text-gray-700">
-        {UI_MESSAGES.PRODUCT_INFO_LOADING.replace("...", " 중...")}{" "}
-      </div>
-    );
-  }
+    if (!validateAuth()) {
+      return;
+    }
+    if (!validateOrderData()) {
+      return;
+    }
 
-  if (error) {
-    return (
-      <div className="container mx-auto py-10 text-center text-xl font-bold text-red-700">
-        오류: {error}
-      </div>
-    );
-  }
-
-  if (!productInfo) {
-    return (
-      <div className="container mx-auto py-10 text-center text-xl font-bold text-gray-700">
-        {UI_MESSAGES.PRODUCT_NOT_FOUND}
-      </div>
-    );
-  }
-
-  const handleReceiversUpdate = (receivers: ReceiverField[]) => {
-    setFinalReceivers(receivers);
-    console.log("최종 받는 사람 목록 업데이트됨:", receivers);
-  };
-
-  const handleReceiverCancel = () => {
-    console.log("Receiver 컴포넌트에서 취소되었습니다.");
-  };
+    orderMutation.mutate();
+  }, [validateAuth, validateOrderData, orderMutation]);
 
   return (
     <div className="min-h-screen bg-gray-100 px-4 pt-4 pb-[80px]">
       <ThanksCardSlideSection onMessageChange={setMessageContent} />
       <SenderSection onSenderNameChange={setSenderName} />
       <ReceiverSection
-        onReceiversUpdate={handleReceiversUpdate}
-        onCancel={handleReceiverCancel}
+        onReceiversUpdate={setFinalReceivers}
+        onCancel={() => {}}
       />
       <ProductDetailCard
         imageUrl={productInfo.imageURL}
@@ -226,7 +166,6 @@ const GiftOrderPage = () => {
         brand={productInfo.brandInfo.name}
         price={productInfo.price.sellingPrice}
       />
-
       <OrderConfirmSection
         totalPrice={totalPrice}
         quantity={totalQuantity.toString()}
@@ -234,7 +173,7 @@ const GiftOrderPage = () => {
         sender={senderName}
         message={messageContent}
         onOrderClick={handleOrderSubmit}
-        isOrdering={isOrdering}
+        isOrdering={orderMutation.isPending}
       />
       <ToastContainer
         position="top-center"
