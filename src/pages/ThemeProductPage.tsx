@@ -29,7 +29,7 @@ export const ThemeProductsPage = () => {
       setLoading(true);
       const id = parseInt(themeId, 10);
       const productResponse = await getThemeProducts(id, cursor, 10);
-      console.log("추가 상품:", productResponse);
+      //("추가 상품:", productResponse);
 
       setProducts((prevProducts) => [...prevProducts, ...productResponse.list]);
       setCursor(productResponse.cursor);
