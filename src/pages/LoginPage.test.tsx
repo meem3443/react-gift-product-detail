@@ -155,7 +155,7 @@ describe("LoginPage", () => {
     const loginButton = screen.getByRole("button", { name: "로그인" });
 
     await user.type(passwordInput, "short");
-    fireEvent.blur(passwordInput);
+    await user.tab(); // fireEvent.blur 대신 userEvent.tab() 사용
 
     await waitFor(() => {
       expect(
