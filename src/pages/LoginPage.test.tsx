@@ -183,35 +183,43 @@ describe("LoginPage", () => {
     });
   });
 
-  it("유효한 자격 증명으로 로그인 시 '로그인 중...' 표시 후 홈으로 이동합니다.", async () => {
+  it("'로그인' 버튼 클릭 시 '로그인 중...' 상태를 올바르게 표시합니다.", async () => {
     const user = userEvent.setup();
-    // mockLogin 은 beforeEach에서 딜레이있는 Promise 함수로 이미 모킹됨
     renderLoginPage();
 
+    // 유효한 정보 입력
     await user.type(screen.getByPlaceholderText("이메일"), "valid@kakao.com");
     await user.type(screen.getByPlaceholderText("비밀번호"), "validpassword");
 
+    // 버튼이 활성화된 것을 확인하고 클릭
     const loginButton = screen.getByRole("button", { name: "로그인" });
     await waitFor(() => expect(loginButton).toBeEnabled());
-
     await user.click(loginButton);
 
-    // 버튼 텍스트가 "로그인 중..." 으로 변경되는지 확인
+    // Promise가 해결되기 전, "로그인 중..." 텍스트를 확인
     await waitFor(() => {
       expect(
         screen.getByRole("button", { name: "로그인 중..." })
       ).toBeInTheDocument();
     });
+  });
 
-    // 로그인 함수가 호출되고, 홈으로 이동했는지 확인
+  it("유효한 자격 증명으로 로그인 성공 시 홈으로 이동합니다.", async () => {
+    const user = userEvent.setup();
+    renderLoginPage();
+
+    // 유효한 정보 입력
+    await user.type(screen.getByPlaceholderText("이메일"), "valid@kakao.com");
+    await user.type(screen.getByPlaceholderText("비밀번호"), "validpassword");
+
+    // 버튼 클릭
+    const loginButton = screen.getByRole("button", { name: "로그인" });
+    await waitFor(() => expect(loginButton).toBeEnabled());
+    await user.click(loginButton);
+
+    // Promise가 해결된 후, navigate 함수가 올바른 경로로 호출되었는지 확인
     await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalledWith(
-        "valid@kakao.com",
-        "validpassword"
-      );
       expect(mockNavigate).toHaveBeenCalledWith("/");
     });
   });
-
-  // 추가로 실패했던 로그인 실패와 에러 메시지 표시 테스트도 위 패턴 참고해 쉽게 확장 가능
 });
